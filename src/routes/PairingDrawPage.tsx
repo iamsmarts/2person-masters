@@ -12,6 +12,7 @@ import {
   revealRightPlayer,
   generateTeeTimes,
   revealNextTeeSlot,
+  paidReset,
   resetDraw,
   getLeftTier,
   getRightTier,
@@ -135,6 +136,11 @@ export default function PairingDrawPage() {
     }
   }
 
+  async function handlePaidReset(amount: number) {
+    await paidReset(amount)
+    await loadData()
+  }
+
   async function handleReset() {
     await resetDraw()
     await loadData()
@@ -178,10 +184,21 @@ export default function PairingDrawPage() {
   return (
     <div className={`min-h-screen bg-gray-900 ${isAdmin ? 'pb-32' : ''}`}>
       {/* Header */}
-      <header className="bg-masters-green py-4">
+      <header className="bg-masters-green py-4 relative">
         <h1 className="text-2xl font-bold text-white text-center">
           QGC Masters Draw
         </h1>
+        {/* Reset Counter - visible on stream */}
+        {drawState.resets_used > 0 && (
+          <div className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 px-3 py-1 rounded">
+            <span className="text-sm text-masters-yellow font-bold">
+              Resets: {drawState.resets_used}/3
+            </span>
+            <span className="text-xs text-gray-300 ml-2">
+              ${drawState.reset_amounts.join(' + $')} raised
+            </span>
+          </div>
+        )}
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-8">
@@ -267,6 +284,7 @@ export default function PairingDrawPage() {
           onRevealRight={handleRevealRight}
           onGenerateTeeTimes={handleGenerateTeeTimes}
           onRevealNextTee={handleRevealNextTee}
+          onPaidReset={handlePaidReset}
           onReset={handleReset}
         />
       )}

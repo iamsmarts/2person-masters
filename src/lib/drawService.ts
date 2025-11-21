@@ -396,7 +396,7 @@ export async function resetDraw(): Promise<void> {
 
   if (teamsError) throw teamsError
 
-  // Reset draw state
+  // Reset draw state (full reset - clears reset counters too)
   const { error: stateError } = await supabase
     .from('draw_state')
     .update({
@@ -404,6 +404,55 @@ export async function resetDraw(): Promise<void> {
       current_team_number: null,
       currently_filling_side: null,
       current_tee_reveal_index: null,
+      resets_used: 0,
+      reset_amounts: [],
+    })
+    .eq('id', drawState.id)
+
+  if (stateError) throw stateError
+}
+
+export async function paidReset(amount: number): Promise<void> {
+  const drawState = await fetchDrawState()
+
+  // Check if resets are still available
+  if (drawState.resets_used >= 3) {
+    throw new Error('Maximum resets (3) already used!')
+  }
+
+  // Check if we're in a valid state to reset (during pairing)
+  if (!['PAIRING_T1_T3', 'PAIRING_T2_TIERS'].includes(drawState.status)) {
+    throw new Error('Paid resets only available during pairing phase')
+  }
+
+  // Delete tee assignments (shouldn't exist yet, but just in case)
+  const { error: assignError } = await supabase
+    .from('tee_assignments')
+    .delete()
+    .neq('id', '00000000-0000-0000-0000-000000000000')
+
+  if (assignError) throw assignError
+
+  // Delete teams
+  const { error: teamsError } = await supabase
+    .from('teams')
+    .delete()
+    .neq('id', '00000000-0000-0000-0000-000000000000')
+
+  if (teamsError) throw teamsError
+
+  // Update draw state with new reset info
+  const newAmounts = [...drawState.reset_amounts, amount]
+
+  const { error: stateError } = await supabase
+    .from('draw_state')
+    .update({
+      status: 'NOT_STARTED',
+      current_team_number: null,
+      currently_filling_side: null,
+      current_tee_reveal_index: null,
+      resets_used: drawState.resets_used + 1,
+      reset_amounts: newAmounts,
     })
     .eq('id', drawState.id)
 

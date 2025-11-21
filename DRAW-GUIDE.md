@@ -10,8 +10,10 @@ This guide walks you through running the live draw show for the QGC 2-Person Mas
 
 1. Go to your Supabase project dashboard
 2. Navigate to **SQL Editor**
-3. Copy and paste the contents of `supabase/migrations/001_initial_schema.sql`
-4. Click **Run** to create tables and seed data
+3. Run the migrations in order:
+   - `supabase/migrations/001_initial_schema.sql` (tables and seed data)
+   - `supabase/migrations/002_add_reset_tracking.sql` (paid reset feature)
+4. Click **Run** for each migration
 
 ### 2. Verify Environment
 
@@ -105,14 +107,56 @@ After Team 2 is complete, the app automatically switches to Tier 2 pairings.
 
 ---
 
+## Paid Resets (Fundraising Feature)
+
+Mid-draw, players can donate to reset the entire draw and try for better pairings!
+
+### Rules
+- **Maximum 3 resets** per draw
+- Each reset must be **higher than the previous** donation
+- Only available during pairing phase (not after tee times)
+- Money handled externally (Zelle, Apple Pay, etc.)
+
+### How It Works
+
+1. Mid-draw, Jorge sees he's paired with someone he doesn't like
+2. Jorge says "I'll pay $20 to reset!"
+3. He sends $20 via Zelle/Apple Pay
+4. Admin enters `20` in the amount field and clicks **Paid Reset**
+5. Draw resets to beginning, counter shows "Resets: 1/3 - $20 raised"
+6. Admin clicks **Start Draw** to begin fresh draw
+7. Next reset must beat $20 (e.g., $25)
+
+### Visual Display
+
+- **Header badge:** Shows "Resets: X/3 - $XX raised" on the stream view
+- **Admin panel:** Shows reset counter and amount history
+
+### Example Flow
+
+| Reset | Donor | Amount | Running Total |
+|-------|-------|--------|---------------|
+| 1 | Jorge | $20 | $20 |
+| 2 | Rudy | $35 | $55 |
+| 3 | Memo | $50 | $105 |
+
+After 3 resets, the button is disabled and the draw is final!
+
+### Admin Controls
+
+- **Paid Reset button** (yellow) - Only active during pairing, requires amount input
+- **Full Reset button** (red) - Testing only, clears everything including reset counter
+
+---
+
 ## Wiping Data (Reset for Test Runs)
 
-### Option 1: In-App Reset (Quick)
+### Option 1: In-App Full Reset (Quick)
 
 1. Go to admin view: `/pairing-draw?admin=qgc-masters-2026-draw-admin-k7x9m2`
 2. In the admin panel, type `RESET` in the text field
-3. Click the **Reset** button
-4. This clears all teams and tee assignments, resets draw state to NOT_STARTED
+3. Click the **Full Reset** button
+4. This clears everything including reset counter (back to 0/3)
 
 ### Option 2: SQL Reset (Complete Wipe)
 
@@ -125,12 +169,14 @@ DELETE FROM tee_assignments;
 -- Delete all teams
 DELETE FROM teams;
 
--- Reset draw state
+-- Reset draw state (including reset counter)
 UPDATE draw_state SET
   status = 'NOT_STARTED',
   current_team_number = NULL,
   currently_filling_side = NULL,
   current_tee_reveal_index = NULL,
+  resets_used = 0,
+  reset_amounts = '[]'::jsonb,
   updated_at = now();
 ```
 

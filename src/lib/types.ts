@@ -55,6 +55,8 @@ export interface DrawState {
   current_team_number: number | null
   currently_filling_side: FillingSide | null
   current_tee_reveal_index: number | null
+  resets_used: number
+  reset_amounts: number[]
   created_at: string
   updated_at: string
 }
