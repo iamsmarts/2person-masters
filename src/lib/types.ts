@@ -49,6 +49,11 @@ export interface TeeAssignment {
   tee_time?: TeeTime
 }
 
+export interface ResetInfo {
+  player: string
+  amount: number
+}
+
 export interface DrawState {
   id: string
   status: DrawStatus
@@ -56,7 +61,7 @@ export interface DrawState {
   currently_filling_side: FillingSide | null
   current_tee_reveal_index: number | null
   resets_used: number
-  reset_amounts: number[]
+  reset_amounts: ResetInfo[]
   created_at: string
   updated_at: string
 }

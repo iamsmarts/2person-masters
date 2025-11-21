@@ -40,3 +40,6 @@ coverage/
 
 # Vite
 vite.config.ts.timestamp-*
+
+# Design reference
+design-code/
