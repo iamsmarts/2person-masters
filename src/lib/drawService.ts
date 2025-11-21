@@ -412,7 +412,7 @@ export async function resetDraw(): Promise<void> {
   if (stateError) throw stateError
 }
 
-export async function paidReset(amount: number): Promise<void> {
+export async function paidReset(playerName: string, amount: number): Promise<void> {
   const drawState = await fetchDrawState()
 
   // Check if resets are still available
@@ -442,7 +442,7 @@ export async function paidReset(amount: number): Promise<void> {
   if (teamsError) throw teamsError
 
   // Update draw state with new reset info
-  const newAmounts = [...drawState.reset_amounts, amount]
+  const newAmounts = [...drawState.reset_amounts, { player: playerName, amount }]
 
   const { error: stateError } = await supabase
     .from('draw_state')

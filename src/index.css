@@ -2,11 +2,127 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here.
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* QGC Masters Color Palette */
+    --background: 44 55% 90%; /* Warm neutral cream #F4E9C9 */
+    --foreground: 217 56% 25%; /* Deep navy #1D3661 */
+
+    --card: 0 0% 100%; /* White cards */
+    --card-foreground: 217 56% 25%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 217 56% 25%;
+
+    --primary: 217 56% 25%; /* Deep navy #1D3661 */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 30 82% 53%; /* Warm gold #D38C22 */
+    --secondary-foreground: 217 56% 25%;
+
+    --muted: 210 20% 87%; /* Soft gray-blue #D9DFE4 */
+    --muted-foreground: 217 30% 45%;
+
+    --accent: 48 80% 56%; /* Bright gold #E8C732 */
+    --accent-foreground: 217 56% 25%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 210 20% 87%;
+    --input: 210 20% 87%;
+    --ring: 217 56% 25%;
+
+    --radius: 0.75rem;
+
+    /* Custom QGC tokens */
+    --hero-gradient-start: 217 56% 25%; /* Navy */
+    --hero-gradient-end: 145 40% 35%; /* Golf green */
+    --gold-primary: 48 80% 56%; /* Bright gold */
+    --gold-secondary: 30 82% 53%; /* Warm orange-gold */
+    --cream: 44 55% 90%; /* Warm neutral */
+    --golf-green: 145 40% 35%; /* Golf green for accents */
+
+    /* Typography */
+    --font-serif: 'Playfair Display', serif;
+    --font-sans: 'Inter', sans-serif;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    margin: 0;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif;
+  }
+}
+
+@layer utilities {
+  .font-serif {
+    font-family: var(--font-serif);
+  }
+
+  .font-sans {
+    font-family: var(--font-sans);
+  }
+
+  .hero-gradient {
+    background: linear-gradient(135deg, hsl(var(--hero-gradient-start)), hsl(var(--hero-gradient-end)));
+  }
+
+  .gold-accent {
+    color: hsl(var(--gold-primary));
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.6s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+/* Slam animation for paid resets */
+@keyframes slam {
+  0% {
+    transform: translateY(-50px) scale(1.3);
+    opacity: 0;
+  }
+  50% {
+    transform: translateY(8px) scale(1.05);
+    opacity: 1;
+  }
+  70% {
+    transform: translateY(-4px) scale(0.98);
+  }
+  85% {
+    transform: translateY(2px) scale(1.01);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-slam {
+  animation: slam 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }

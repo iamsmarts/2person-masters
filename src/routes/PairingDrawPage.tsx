@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, Link } from 'react-router-dom'
 import { ADMIN_SECRET } from '../lib/supabaseClient'
 import {
   fetchDrawState,
@@ -25,6 +25,7 @@ import ScorecardTable from '../components/ScorecardTable'
 import BucketColumn from '../components/BucketColumn'
 import TeeSheet from '../components/TeeSheet'
 import AdminPanel from '../components/AdminPanel'
+import { Trophy } from 'lucide-react'
 
 export default function PairingDrawPage() {
   const [searchParams] = useSearchParams()
@@ -136,8 +137,8 @@ export default function PairingDrawPage() {
     }
   }
 
-  async function handlePaidReset(amount: number) {
-    await paidReset(amount)
+  async function handlePaidReset(playerName: string, amount: number) {
+    await paidReset(playerName, amount)
     await loadData()
   }
 
@@ -148,24 +149,24 @@ export default function PairingDrawPage() {
 
   if (loading && !drawState) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <p className="text-gray-400">Loading...</p>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-muted-foreground">Loading...</p>
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <p className="text-red-500">Error: {error}</p>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-destructive">Error: {error}</p>
       </div>
     )
   }
 
   if (!drawState) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <p className="text-gray-400">No draw state found</p>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-muted-foreground">No draw state found</p>
       </div>
     )
   }
@@ -182,23 +183,20 @@ export default function PairingDrawPage() {
   const showTeeTimeView = ['TEE_TIMES_READY', 'TEE_TIMES_DONE'].includes(drawState.status)
 
   return (
-    <div className={`min-h-screen bg-gray-900 ${isAdmin ? 'pb-32' : ''}`}>
+    <div className={`min-h-screen bg-background ${isAdmin ? 'pb-32' : ''}`}>
       {/* Header */}
-      <header className="bg-masters-green py-4 relative">
-        <h1 className="text-2xl font-bold text-white text-center">
-          QGC Masters Draw
-        </h1>
-        {/* Reset Counter - visible on stream */}
-        {drawState.resets_used > 0 && (
-          <div className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 px-3 py-1 rounded">
-            <span className="text-sm text-masters-yellow font-bold">
-              Resets: {drawState.resets_used}/3
-            </span>
-            <span className="text-xs text-gray-300 ml-2">
-              ${drawState.reset_amounts.join(' + $')} raised
-            </span>
-          </div>
-        )}
+      <header className="hero-gradient py-6 relative overflow-hidden">
+        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.1),transparent_50%)]" />
+        <div className="relative z-10 text-center">
+          <Link to="/" className="inline-flex items-center gap-2 mb-2 hover:opacity-80 transition-opacity">
+            <Trophy className="w-6 h-6 text-accent" />
+            <h1 className="text-3xl font-bold text-white tracking-tight">
+              Quasar GC Masters Draw
+            </h1>
+            <Trophy className="w-6 h-6 text-accent" />
+          </Link>
+          <p className="text-sm text-white/70">Live Pairing Draw</p>
+        </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-8">
@@ -226,7 +224,7 @@ export default function PairingDrawPage() {
 
               {drawState.status === 'NOT_STARTED' && (
                 <div className="mt-6 text-center">
-                  <p className="text-gray-400 text-lg">
+                  <p className="text-muted-foreground text-lg">
                     Waiting for draw to begin...
                   </p>
                 </div>
@@ -234,12 +232,30 @@ export default function PairingDrawPage() {
 
               {drawState.status === 'PAIRINGS_DONE' && (
                 <div className="mt-6 text-center">
-                  <p className="text-masters-yellow text-lg font-bold">
+                  <p className="text-golf-green text-lg font-bold">
                     All teams have been drawn!
                   </p>
-                  <p className="text-gray-400 mt-2">
+                  <p className="text-muted-foreground mt-2">
                     Ready to generate tee times.
                   </p>
+                </div>
+              )}
+
+              {/* Reset History */}
+              {drawState.resets_used > 0 && (
+                <div
+                  key={drawState.resets_used}
+                  className="mt-6 bg-primary/10 px-4 py-3 rounded-lg text-center animate-slam border border-secondary/30"
+                >
+                  {[...drawState.reset_amounts].reverse().map((reset, index) => {
+                    const emoji = index === 0 ? '☠️' : index === 1 ? '😵' : '😭'
+                    return (
+                      <div key={index} className="text-sm text-secondary font-bold">{emoji} {reset.player} triggered a ${reset.amount} reset</div>
+                    )
+                  })}
+                  <div className="text-xs text-muted-foreground mt-2 border-t border-muted pt-2">
+                    {3 - drawState.resets_used} reset{3 - drawState.resets_used !== 1 ? 's' : ''} remaining
+                  </div>
                 </div>
               )}
             </div>
@@ -266,7 +282,7 @@ export default function PairingDrawPage() {
 
             {drawState.status === 'TEE_TIMES_DONE' && (
               <div className="mt-6 text-center">
-                <p className="text-masters-yellow text-lg font-bold">
+                <p className="text-golf-green text-lg font-bold">
                   All tee times have been revealed!
                 </p>
               </div>
@@ -279,6 +295,7 @@ export default function PairingDrawPage() {
       {isAdmin && (
         <AdminPanel
           drawState={drawState}
+          players={players}
           onStartDraw={handleStartDraw}
           onRevealLeft={handleRevealLeft}
           onRevealRight={handleRevealRight}

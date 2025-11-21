@@ -1,19 +1,21 @@
 import { useState } from 'react'
-import type { DrawState } from '../lib/types'
+import type { DrawState, Player } from '../lib/types'
 
 interface AdminPanelProps {
   drawState: DrawState
+  players: Player[]
   onStartDraw: () => Promise<void>
   onRevealLeft: () => Promise<void>
   onRevealRight: () => Promise<void>
   onGenerateTeeTimes: () => Promise<void>
   onRevealNextTee: () => Promise<void>
-  onPaidReset: (amount: number) => Promise<void>
+  onPaidReset: (playerName: string, amount: number) => Promise<void>
   onReset: () => Promise<void>
 }
 
 export default function AdminPanel({
   drawState,
+  players,
   onStartDraw,
   onRevealLeft,
   onRevealRight,
@@ -25,6 +27,7 @@ export default function AdminPanel({
   const [loading, setLoading] = useState(false)
   const [resetConfirm, setResetConfirm] = useState('')
   const [paidResetAmount, setPaidResetAmount] = useState('')
+  const [paidResetPlayer, setPaidResetPlayer] = useState('')
 
   async function handleAction(action: () => Promise<void>) {
     setLoading(true)
@@ -38,6 +41,11 @@ export default function AdminPanel({
   }
 
   async function handlePaidReset() {
+    if (!paidResetPlayer) {
+      alert('Select a player')
+      return
+    }
+
     const amount = parseFloat(paidResetAmount)
     if (isNaN(amount) || amount <= 0) {
       alert('Enter a valid amount')
@@ -46,7 +54,7 @@ export default function AdminPanel({
 
     // Check if amount is higher than previous
     if (drawState.reset_amounts.length > 0) {
-      const lastAmount = drawState.reset_amounts[drawState.reset_amounts.length - 1]
+      const lastAmount = drawState.reset_amounts[drawState.reset_amounts.length - 1].amount
       if (amount <= lastAmount) {
         alert(`Amount must be higher than $${lastAmount}`)
         return
@@ -55,8 +63,9 @@ export default function AdminPanel({
 
     setLoading(true)
     try {
-      await onPaidReset(amount)
+      await onPaidReset(paidResetPlayer, amount)
       setPaidResetAmount('')
+      setPaidResetPlayer('')
     } catch (error) {
       alert(error instanceof Error ? error.message : 'Paid reset failed')
     } finally {
@@ -82,26 +91,29 @@ export default function AdminPanel({
   const canRevealTee = status === 'TEE_TIMES_READY'
   const canPaidReset = ['PAIRING_T1_T3', 'PAIRING_T2_TIERS'].includes(status) && resets_used < 3
 
+  // Sort players alphabetically for the dropdown
+  const sortedPlayers = [...players].sort((a, b) => a.display_name.localeCompare(b.display_name))
+
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-gray-900 border-t border-gray-700 p-4 shadow-lg">
+    <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-muted p-4 shadow-lg">
       <div className="max-w-6xl mx-auto">
         {/* State Display */}
-        <div className="mb-4 text-sm text-gray-400 flex flex-wrap gap-4">
-          <span>Status: <strong className="text-white">{status}</strong></span>
+        <div className="mb-4 text-sm text-muted-foreground flex flex-wrap gap-4">
+          <span>Status: <strong className="text-foreground">{status}</strong></span>
           {current_team_number && (
-            <span>Team: <strong className="text-white">{current_team_number}</strong></span>
+            <span>Team: <strong className="text-foreground">{current_team_number}</strong></span>
           )}
           {currently_filling_side && (
-            <span>Side: <strong className="text-white">{currently_filling_side}</strong></span>
+            <span>Side: <strong className="text-foreground">{currently_filling_side}</strong></span>
           )}
           {current_tee_reveal_index && (
-            <span>Reveal: <strong className="text-white">{current_tee_reveal_index}/10</strong></span>
+            <span>Reveal: <strong className="text-foreground">{current_tee_reveal_index}/10</strong></span>
           )}
           <span>
-            Resets: <strong className={resets_used >= 3 ? 'text-red-400' : 'text-masters-yellow'}>{resets_used}/3</strong>
+            Resets: <strong className={resets_used >= 3 ? 'text-destructive' : 'text-secondary'}>{resets_used}/3</strong>
             {reset_amounts.length > 0 && (
-              <span className="text-gray-500 ml-1">
-                (${reset_amounts.join(', $')})
+              <span className="text-muted-foreground ml-1">
+                ({reset_amounts.map(r => `${r.player}: $${r.amount}`).join(', ')})
               </span>
             )}
           </span>
@@ -112,7 +124,7 @@ export default function AdminPanel({
           <button
             onClick={() => handleAction(onStartDraw)}
             disabled={!canStart || loading}
-            className="px-4 py-2 bg-green-600 text-white rounded font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-green-700 transition-colors"
+            className="px-4 py-2 bg-golf-green text-white rounded font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
           >
             Start Draw
           </button>
@@ -120,7 +132,7 @@ export default function AdminPanel({
           <button
             onClick={() => handleAction(onRevealLeft)}
             disabled={!canRevealLeft || loading}
-            className="px-4 py-2 bg-blue-600 text-white rounded font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-700 transition-colors"
+            className="px-4 py-2 bg-secondary text-secondary-foreground rounded font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
           >
             Reveal Left Player
           </button>
@@ -128,7 +140,7 @@ export default function AdminPanel({
           <button
             onClick={() => handleAction(onRevealRight)}
             disabled={!canRevealRight || loading}
-            className="px-4 py-2 bg-blue-600 text-white rounded font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-700 transition-colors"
+            className="px-4 py-2 bg-secondary text-secondary-foreground rounded font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
           >
             Reveal Right Player
           </button>
@@ -136,7 +148,7 @@ export default function AdminPanel({
           <button
             onClick={() => handleAction(onGenerateTeeTimes)}
             disabled={!canGenerateTee || loading}
-            className="px-4 py-2 bg-purple-600 text-white rounded font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-purple-700 transition-colors"
+            className="px-4 py-2 bg-accent text-primary rounded font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
           >
             Generate Tee Times
           </button>
@@ -144,26 +156,38 @@ export default function AdminPanel({
           <button
             onClick={() => handleAction(onRevealNextTee)}
             disabled={!canRevealTee || loading}
-            className="px-4 py-2 bg-purple-600 text-white rounded font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-purple-700 transition-colors"
+            className="px-4 py-2 bg-accent text-primary rounded font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
           >
             Reveal Next Tee Slot
           </button>
 
           {/* Paid Reset */}
-          <div className="flex items-center gap-2 border-l border-gray-700 pl-3">
-            <span className="text-xs text-gray-500">$</span>
+          <div className="flex items-center gap-2 border-l border-muted pl-3">
+            <select
+              value={paidResetPlayer}
+              onChange={e => setPaidResetPlayer(e.target.value)}
+              className="px-2 py-2 bg-card text-foreground rounded border border-muted text-sm"
+            >
+              <option value="">Player...</option>
+              {sortedPlayers.map(player => (
+                <option key={player.id} value={player.display_name}>
+                  {player.display_name}
+                </option>
+              ))}
+            </select>
+            <span className="text-xs text-muted-foreground">$</span>
             <input
               type="number"
               value={paidResetAmount}
               onChange={e => setPaidResetAmount(e.target.value)}
-              placeholder="Amount"
+              placeholder="Amt"
               min="1"
-              className="px-2 py-2 bg-gray-800 text-white rounded border border-gray-600 text-sm w-20"
+              className="px-2 py-2 bg-card text-foreground rounded border border-muted text-sm w-16"
             />
             <button
               onClick={handlePaidReset}
               disabled={!canPaidReset || loading}
-              className="px-4 py-2 bg-yellow-600 text-white rounded font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-yellow-700 transition-colors"
+              className="px-4 py-2 bg-accent text-primary rounded font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
             >
               Paid Reset
             </button>
@@ -175,13 +199,14 @@ export default function AdminPanel({
               type="text"
               value={resetConfirm}
               onChange={e => setResetConfirm(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleReset()}
               placeholder='Type "RESET"'
-              className="px-3 py-2 bg-gray-800 text-white rounded border border-gray-600 text-sm w-32"
+              className="px-3 py-2 bg-card text-foreground rounded border border-muted text-sm w-32"
             />
             <button
               onClick={handleReset}
               disabled={loading}
-              className="px-4 py-2 bg-red-600 text-white rounded font-medium disabled:opacity-50 hover:bg-red-700 transition-colors"
+              className="px-4 py-2 bg-destructive text-destructive-foreground rounded font-medium disabled:opacity-50 hover:opacity-90 transition-opacity"
             >
               Full Reset
             </button>

@@ -23,10 +23,10 @@ export default function ScorecardTable({
   })
 
   return (
-    <div className="bg-gray-800 rounded-lg overflow-hidden shadow-xl">
+    <div className="bg-card rounded-lg overflow-hidden shadow-xl border border-muted">
       <table className="w-full">
         <thead>
-          <tr className="bg-masters-green">
+          <tr className="hero-gradient">
             <th className="px-4 py-3 text-sm font-bold text-white w-20">Team</th>
             <th className="px-4 py-3 text-sm font-bold text-white">Player 1</th>
             <th className="px-4 py-3 text-sm font-bold text-white">Player 2</th>
@@ -44,29 +44,29 @@ export default function ScorecardTable({
               <tr
                 key={teamNum}
                 className={`
-                  border-t border-gray-700 transition-colors duration-300
-                  ${isCurrentTeam ? 'bg-gray-700' : 'bg-gray-800'}
+                  border-t border-muted transition-colors duration-300
+                  ${isCurrentTeam ? 'bg-muted/50' : 'bg-card'}
                 `}
               >
-                <td className="px-4 py-3 text-sm font-bold text-gray-300 text-center">
+                <td className="px-4 py-3 text-sm font-bold text-foreground/70 text-center">
                   {teamNum}
                 </td>
                 <td
                   className={`
-                    px-4 py-3 text-sm text-center transition-all duration-500
-                    ${isAnimatingLeft ? 'bg-masters-yellow text-gray-900 font-bold animate-pulse' : ''}
-                    ${isFillingLeft && !team?.left_player ? 'bg-gray-600' : ''}
-                    ${team?.left_player ? 'text-white font-medium' : 'text-gray-500'}
+                    px-4 py-3 text-base text-center transition-all duration-500
+                    ${isAnimatingLeft ? 'bg-secondary text-white font-bold animate-pulse' : ''}
+                    ${isFillingLeft && !team?.left_player ? 'bg-muted/30' : ''}
+                    ${team?.left_player ? 'text-foreground font-medium' : 'text-muted-foreground'}
                   `}
                 >
                   {team?.left_player?.display_name || (isFillingLeft ? '...' : '-')}
                 </td>
                 <td
                   className={`
-                    px-4 py-3 text-sm text-center transition-all duration-500
-                    ${isAnimatingRight ? 'bg-masters-yellow text-gray-900 font-bold animate-pulse' : ''}
-                    ${isFillingRight && !team?.right_player ? 'bg-gray-600' : ''}
-                    ${team?.right_player ? 'text-white font-medium' : 'text-gray-500'}
+                    px-4 py-3 text-base text-center transition-all duration-500
+                    ${isAnimatingRight ? 'bg-secondary text-white font-bold animate-pulse' : ''}
+                    ${isFillingRight && !team?.right_player ? 'bg-muted/30' : ''}
+                    ${team?.right_player ? 'text-foreground font-medium' : 'text-muted-foreground'}
                   `}
                 >
                   {team?.right_player?.display_name || (isFillingRight ? '...' : '-')}
