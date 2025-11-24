@@ -11,6 +11,18 @@ export default function TeeSheet({
   teeAssignments,
   lastRevealedId,
 }: TeeSheetProps) {
+  const timeLabelToMinutes = (label: string): number => {
+    const [timePart, meridiem = ''] = label.split(' ')
+    const [hourStr, minuteStr = '0'] = timePart.split(':')
+    let hour = Number(hourStr) % 12
+    if (meridiem.toUpperCase() === 'PM') hour += 12
+    return hour * 60 + Number(minuteStr)
+  }
+
+  const sortedTeeTimes = [...teeTimes].sort(
+    (a, b) => timeLabelToMinutes(a.label) - timeLabelToMinutes(b.label),
+  )
+
   return (
     <div className="bg-card rounded-lg overflow-hidden shadow-xl border border-muted">
       <table className="w-full">
@@ -22,7 +34,7 @@ export default function TeeSheet({
           </tr>
         </thead>
         <tbody>
-          {teeTimes.map(teeTime => {
+          {sortedTeeTimes.map(teeTime => {
             const assignments = teeAssignments.filter(a => a.tee_time_id === teeTime.id)
             const team1 = assignments.find(a => a.slot_in_foursome === 1)
             const team2 = assignments.find(a => a.slot_in_foursome === 2)

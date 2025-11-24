@@ -56,6 +56,14 @@ export default function HomePage() {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
   }
 
+  function timeLabelToMinutes(label: string): number {
+    const [timePart, meridiem = ''] = label.split(' ')
+    const [hourStr, minuteStr = '0'] = timePart.split(':')
+    let hour = Number(hourStr) % 12
+    if (meridiem.toUpperCase() === 'PM') hour += 12
+    return hour * 60 + Number(minuteStr)
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -76,6 +84,7 @@ export default function HomePage() {
   const tier2a = players.filter(p => p.tier === 'T2A')
   const tier2b = players.filter(p => p.tier === 'T2B')
   const tier3 = players.filter(p => p.tier === 'T3')
+  const sortedTeeTimes = [...teeTimes].sort((a, b) => timeLabelToMinutes(a.label) - timeLabelToMinutes(b.label))
 
   const showTeams = drawState && ['PAIRINGS_DONE', 'TEE_TIMES_READY', 'TEE_TIMES_DONE'].includes(drawState.status)
   const showTeeTimes = drawState && ['TEE_TIMES_READY', 'TEE_TIMES_DONE'].includes(drawState.status)
@@ -478,7 +487,7 @@ export default function HomePage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-muted">
-                    {teeTimes.map((teeTime, idx) => {
+                    {sortedTeeTimes.map((teeTime, idx) => {
                       const assignments = teeAssignments.filter(a => a.tee_time_id === teeTime.id)
                       const team1 = assignments.find(a => a.slot_in_foursome === 1)
                       const team2 = assignments.find(a => a.slot_in_foursome === 2)
